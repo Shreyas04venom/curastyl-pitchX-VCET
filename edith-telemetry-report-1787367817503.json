@@ -1,0 +1,26 @@
+{
+  "app": "Edith Voice Assistant",
+  "version": "2.5.0",
+  "exportDate": "2026-08-22T03:03:37.502Z",
+  "systemConfig": {
+    "voice": "shimmer",
+    "autoPlay": true,
+    "researchMode": "explanatory",
+    "enableDiagrams": true,
+    "voiceSpeed": 1,
+    "themeMode": "cosmic",
+    "confidenceThreshold": "85%"
+  },
+  "telemetrySLA": {
+    "avgLatencyMs": 395,
+    "groundedRatePct": 98.8,
+    "sttModel": "Whisper STT / Web Speech Bridge",
+    "ragModel": "Google Gemini 2.5 Flash / Neural Hybrid Engine",
+    "evidenceSources": [
+      "MS MARCO",
+      "Wikipedia Official",
+      "Encyclopedia Britannica",
+      "IEEE Standards"
+    ]
+  }
+}
