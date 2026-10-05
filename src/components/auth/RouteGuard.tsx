@@ -71,7 +71,10 @@ export default function RouteGuard({
 
         if (error || !user) {
           if (!isCancelled) {
-            const loginUrl = `/auth/login?next=${encodeURIComponent(pathname)}`;
+            const loginPath = pathname.startsWith("/salon-owner")
+              ? "/auth/salon-owner-login"
+              : "/auth/login";
+            const loginUrl = `${loginPath}?next=${encodeURIComponent(pathname)}`;
             router.replace(loginUrl);
           }
           return;
@@ -94,7 +97,7 @@ export default function RouteGuard({
 
         if (!allowedRoles.includes(userRole)) {
           // Role mismatch redirect - avoid redirect loop if already at target
-          const target = userRole === "salon_owner" ? "/salon-owner/dashboard" : "/dashboard";
+          const target = userRole === "salon_owner" ? "/salon-owner/dashboard" : "/";
           if (pathname !== target && !isCancelled) {
             router.replace(target);
           } else if (!isCancelled) {

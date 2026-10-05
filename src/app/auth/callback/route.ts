@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { createServiceClient } from "@/lib/supabase/server-helpers";
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
@@ -86,18 +87,29 @@ export async function GET(request: NextRequest) {
       // If salon owner and has existing salon, go to dashboard; otherwise go to register
       let redirectPath;
       if (finalRole === "salon_owner") {
-        if (existingProfile) {
-          // Existing salon owner - check if they have a salon
-          const { data: salon } = await supabase
-            .from("salons")
-            .select("id")
-            .eq("owner_id", data.user.id)
-            .maybeSingle();
-          redirectPath = salon ? "/salon-owner/dashboard" : "/salon-owner/register";
-        } else {
-          // New salon owner - go to register their salon
-          redirectPath = "/salon-owner/register";
+        let salon = null;
+        const { data: userSalon } = await supabase
+          .from("salons")
+          .select("id")
+          .eq("owner_id", data.user.id)
+          .maybeSingle();
+        salon = userSalon;
+
+        if (!salon) {
+          try {
+            const adminClient = createServiceClient();
+            const { data: adminSalon } = await adminClient
+              .from("salons")
+              .select("id")
+              .eq("owner_id", data.user.id)
+              .maybeSingle();
+            salon = adminSalon;
+          } catch {
+            // Service client fallback error ignored
+          }
         }
+
+        redirectPath = salon ? "/salon-owner/dashboard" : "/salon-owner/register";
       } else {
         redirectPath = next;
       }

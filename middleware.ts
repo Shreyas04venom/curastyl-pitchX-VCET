@@ -101,15 +101,30 @@ export async function middleware(req: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   if (user && isAuthRoute) {
-    // If there's a 'next' param, redirect there, otherwise go home
     const next = req.nextUrl.searchParams.get("next");
-    const redirectUrl = next && next !== pathname ? next : "/";
-    return NextResponse.redirect(new URL(redirectUrl, req.url));
+    if (next && next !== pathname) {
+      return NextResponse.redirect(new URL(next, req.url));
+    }
+
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      const userRole = profile?.role;
+      const targetUrl = userRole === "salon_owner" ? "/salon-owner/dashboard" : "/";
+      return NextResponse.redirect(new URL(targetUrl, req.url));
+    } catch {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
   }
 
-  // Redirect unauthenticated users to login
+  // Redirect unauthenticated users to login (route owners to salon owner login)
   if (!user && (isProtected || isOwnerRoute || isAdminRoute)) {
-    const loginUrl = new URL("/auth/login", req.url);
+    const loginPath = isOwnerRoute ? "/auth/salon-owner-login" : "/auth/login";
+    const loginUrl = new URL(loginPath, req.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
   }
@@ -121,18 +136,18 @@ export async function middleware(req: NextRequest) {
         .from("profiles")
         .select("role")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       const userRole = profile?.role;
 
-      // 1. Owner routes check: redirect non-owners to customer dashboard
+      // 1. Owner routes check: redirect non-owners to home
       if (isOwnerRoute && !["salon_owner", "admin"].includes(userRole ?? "")) {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        return NextResponse.redirect(new URL("/", req.url));
       }
 
-      // 2. Admin routes check: redirect non-admins to customer dashboard
+      // 2. Admin routes check: redirect non-admins to home
       if (isAdminRoute && userRole !== "admin") {
-        return NextResponse.redirect(new URL("/dashboard", req.url));
+        return NextResponse.redirect(new URL("/", req.url));
       }
 
       // 3. Customer dashboard check: redirect salon owners to owner dashboard

@@ -73,10 +73,21 @@ function SalonOwnerLoginForm() {
       return;
     }
 
+    // Step 3: Check if owner has a salon registered to set the exact destination
+    const { data: salon } = await supabase
+      .from("salons")
+      .select("id")
+      .eq("owner_id", authData.user.id)
+      .maybeSingle();
+
+    const explicitNext = searchParams.get("next");
+    const targetUrl = explicitNext && explicitNext !== "/salon-owner/dashboard"
+      ? explicitNext
+      : (salon ? "/salon-owner/dashboard" : "/salon-owner/register");
+
     setIsLoading(false);
     toast.success(`Welcome back, ${profile.full_name?.split(" ")[0] ?? "Partner"}! 💼`);
-    router.push(next);
-    router.refresh();
+    window.location.href = targetUrl;
   };
 
   return (
@@ -198,7 +209,7 @@ function SalonOwnerLoginForm() {
           </div>
 
           {/* Google Sign In */}
-          <a href="/api/auth/google?role=salon_owner"
+          <a href="/api/auth/google?role=salon_owner&next=/salon-owner/dashboard"
             className="flex items-center justify-center gap-2.5 h-11 rounded-xl bg-white/5 border border-white/10 text-sm text-white/70 hover:bg-white/10 hover:text-white transition-all w-full">
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>

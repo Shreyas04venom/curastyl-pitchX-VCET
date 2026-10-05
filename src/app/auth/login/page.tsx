@@ -52,13 +52,21 @@ function LoginForm() {
         .eq("id", authData.user?.id)
         .single();
 
-      // Block salon owners — they must use the Salon Owner portal
+      // If account is a salon owner, redirect to their dashboard or register
       if (profile?.role === "salon_owner" || profile?.role === "admin") {
-        await supabase.auth.signOut();
+        const { data: salon } = await supabase
+          .from("salons")
+          .select("id")
+          .eq("owner_id", authData.user.id)
+          .maybeSingle();
+
+        const targetUrl = next && next !== "/"
+          ? next
+          : (salon ? "/salon-owner/dashboard" : "/salon-owner/register");
+
         setIsLoading(false);
-        setError(
-          "This account is registered as a Salon Owner. Please use the Salon Owner Sign In page instead."
-        );
+        toast.success("Welcome back, Partner! 💼");
+        window.location.href = targetUrl;
         return;
       }
 

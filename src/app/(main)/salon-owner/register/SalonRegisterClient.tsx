@@ -96,6 +96,16 @@ export default function SalonRegisterClient() {
     const check = async () => {
       setIsCheckingExisting(true);
       try {
+        const res = await fetch("/api/salon-owner/salon");
+        if (res.ok) {
+          const { salon } = await res.json();
+          if (salon) {
+            toast("You already have a salon listed! Redirecting to your dashboard.", { icon: "ℹ️" });
+            router.replace("/salon-owner/dashboard");
+            return;
+          }
+        }
+
         const supabase = createClient();
         const { data } = await supabase
           .from("salons")
@@ -106,6 +116,8 @@ export default function SalonRegisterClient() {
           toast("You already have a salon listed! Redirecting to your dashboard.", { icon: "ℹ️" });
           router.replace("/salon-owner/dashboard");
         }
+      } catch (err) {
+        console.error("Error checking existing salon:", err);
       } finally {
         setIsCheckingExisting(false);
       }

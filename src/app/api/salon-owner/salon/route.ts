@@ -37,7 +37,7 @@ export async function GET() {
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
-    const { data: salon, error } = await supabase
+    let { data: salon, error } = await supabase
       .from("salons")
       .select("*")
       .eq("owner_id", user.id)
@@ -45,8 +45,8 @@ export async function GET() {
       .limit(1)
       .maybeSingle();
 
-    if (error) {
-      // Try service role fallback if RLS blocks query
+    if (!salon || error) {
+      // Try service role fallback if RLS blocks query or silently returns null
       const adminClient = getServiceRoleSupabase();
       if (adminClient) {
         const { data: adminSalon } = await adminClient
@@ -56,8 +56,14 @@ export async function GET() {
           .order("created_at", { ascending: false })
           .limit(1)
           .maybeSingle();
-        return NextResponse.json({ salon: adminSalon || null });
+        if (adminSalon) {
+          salon = adminSalon;
+          error = null;
+        }
       }
+    }
+
+    if (error && !salon) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
 

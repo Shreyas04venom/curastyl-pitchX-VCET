@@ -429,6 +429,10 @@ export default function SalonOwnerDashboard() {
     setSalonLoading(true);
     try {
       const res = await fetch("/api/salon-owner/salon");
+      if (!res.ok) {
+        console.warn("Salon fetch returned status:", res.status);
+        return;
+      }
       const data = await res.json();
       if (data.salon) {
         setSalonData(data.salon);
@@ -469,7 +473,7 @@ export default function SalonOwnerDashboard() {
             router.replace("/salon-owner/register");
           }
         } catch {
-          router.replace("/salon-owner/register");
+          console.error("Client-side salon check failed");
         }
       }
     } catch (e) { console.error(e); }
